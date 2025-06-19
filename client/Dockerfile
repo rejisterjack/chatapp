@@ -17,7 +17,7 @@ COPY . .
 RUN bun run build
 
 # Expose the default preview port
-EXPOSE 5173
+EXPOSE 4173
 
 # Serve the built app using Vite's preview server
 CMD ["bun", "run", "preview"]
