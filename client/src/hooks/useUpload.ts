@@ -1,4 +1,5 @@
 import useSWRMutation from 'swr/mutation'
+import { BASE_URL } from '../config'
 
 async function uploadFetcher(url: string, { arg }: { arg: File }) {
   const formData = new FormData()
@@ -19,7 +20,7 @@ async function uploadFetcher(url: string, { arg }: { arg: File }) {
 
 export function useUpload() {
   const { trigger, isMutating, error } = useSWRMutation(
-    '/api/upload',
+    `${BASE_URL}/api/upload`,
     uploadFetcher
   )
 

@@ -1,4 +1,5 @@
 import useSWRMutation from 'swr/mutation'
+import { BASE_URL } from '../config'
 
 interface ChatPayload {
   message: string
@@ -24,7 +25,7 @@ async function chatFetcher(url: string, { arg }: { arg: ChatPayload }) {
 
 export function useChat() {
   const { trigger, isMutating, error } = useSWRMutation(
-    '/api/chat',
+    `${BASE_URL}/api/chat`,
     chatFetcher
   )
 
