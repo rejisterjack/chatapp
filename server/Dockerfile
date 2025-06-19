@@ -20,4 +20,4 @@ EXPOSE 8080
 
 # The command to run the application
 # We use the compiled version for production, but for dev, this is fine.
-CMD ["bun", "run", "dev"]
+CMD ["bun", "run", "src/index.ts"]

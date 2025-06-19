@@ -1,54 +1,49 @@
-# docker-compose.yml (in the project root)
 version: '3.8'
 
 services:
-  # The Ollama service is now built from our custom Dockerfile
-  ollama:
+  frontend:
     build:
-      # The context is the directory containing our custom Dockerfile and script
-      context: ./docker/ollama
-    # You can override the default model here if you want:
-    # command: ["mistral"]
-    container_name: ollama_service
+      context: ./client
     ports:
-      - "11434:11434"
-    volumes:
-      # The volume is still crucial for persisting the downloaded models
-      - ollama_data:/root/.ollama
+      - '3000:80'
+    depends_on:
+      backend:
+        condition: service_healthy
     networks:
-      - chatbot_network
-    # Uncomment for GPU support if you have it
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+      - app-network
 
-  # The backend service definition remains the same
   backend:
     build:
       context: ./server
-      dockerfile: Dockerfile
-    container_name: chatbot_backend
     ports:
-      - "3001:3000"
-    depends_on:
-      - ollama
+      - '8080:8080'
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-    volumes:
-      - ./server/src:/app/src
+      OLLAMA_HOST: http://ollama:11434
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      ollama:
+        condition: service_started
     networks:
-      - chatbot_network
-    restart: unless-stopped
+      - app-network
 
-# Define the shared network for services to communicate
-networks:
-  chatbot_network:
-    driver: bridge
+  ollama:
+    build:
+      context: ./docker/ollama
+      dockerfile: Dockerfile
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - '11434:11434'
+    networks:
+      - app-network
 
-# Define the named volume for persisting Ollama models
 volumes:
   ollama_data:
+
+networks:
+  app-network:
+    driver: bridge
