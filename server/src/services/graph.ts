@@ -4,23 +4,26 @@ import { ChatOllama } from '@langchain/community/chat_models/ollama'
 import { SystemMessage } from '@langchain/core/messages'
 import { GraphState } from '../types'
 
-const useOllama = process.env.USE_OLLAMA === 'true'
-
 const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
 
-const model = useOllama
-  ? new ChatOllama({
+const getModel = (choice: string | undefined) => {
+  if (choice === 'ollama') {
+    return new ChatOllama({
       baseUrl: ollamaBaseUrl,
       model: 'llama3',
       temperature: 0.7,
     })
-  : new ChatGroq({
+  } else {
+    return new ChatGroq({
       model: 'llama3-8b-8192',
       temperature: 0.7,
     })
+  }
+}
 
 const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
-  const { messages, document_context, memory } = state
+  const { messages, document_context, memory, model: modelChoice } = state
+  console.log(`modelChoice: ${modelChoice}`)
 
   const systemMessage = document_context
     ? new SystemMessage(
@@ -33,7 +36,9 @@ const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
 
   const messagesWithSystem = [systemMessage, ...historyMessages, ...messages]
 
-  console.log('Invoking model with messages:', messagesWithSystem)
+  const model = getModel(state.model)
+
+  console.log(`Using model: ${modelChoice}`)
 
   const response = await model.invoke(messagesWithSystem)
 

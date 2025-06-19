@@ -71,7 +71,7 @@ const app = new Elysia()
       .post(
         '/chat',
         async ({ body, set }) => {
-          const { message, conversationId } = body
+          const { message, conversationId, model } = body
           console.log(
             `Chat for conversation '${conversationId}' with: "${message}"`
           )
@@ -95,6 +95,7 @@ const app = new Elysia()
             messages: [new HumanMessage(message)],
             document_context,
             memory,
+            model: model || 'groq',
           }
 
           const config = { configurable: { thread_id: conversationId } }
@@ -111,6 +112,9 @@ const app = new Elysia()
           body: t.Object({
             message: t.String(),
             conversationId: t.String(),
+            model: t.Optional(
+              t.Union([t.Literal('groq'), t.Literal('ollama')])
+            ),
           }),
         }
       )

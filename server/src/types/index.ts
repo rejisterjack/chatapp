@@ -5,4 +5,5 @@ export type GraphState = {
   messages: BaseMessage[]
   document_context?: string
   memory?: BufferMemory
+  model?: 'ollama' | 'groq'
 }
