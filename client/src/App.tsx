@@ -29,7 +29,7 @@ function App() {
 
   const { sendMessage, isResponding } = useChat()
   const { uploadFile, isUploading } = useUpload()
-  const conversationId = uuidv4()
+  const [conversationId, setConversationId] = useState<string>(uuidv4())
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -90,8 +90,9 @@ function App() {
     setUploadedFile({ name: file.name, status: 'uploading' })
 
     try {
-      await uploadFile(file)
+      const result = await uploadFile(file)
       setUploadedFile({ name: file.name, status: 'success' })
+      setConversationId(result.conversationId)
       showToast('File uploaded successfully!', 'success')
     } catch (error) {
       console.error('Upload error:', error)
