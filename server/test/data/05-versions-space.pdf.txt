@@ -1,0 +1,62 @@
+
+
+Rupam Das
+7602797062#rejisterjack@gmail.comïlinkedin.com/in/rejisterjack§github.com/rejisterjack Portfolio
+Technical Skills
+Languages & Frameworks: TypeScript, JavaScript, Python, React, Next.js, Nest.js, Node.js, Express, GoLang, Rust
+UI & State Management: TailwindCSS, Material UI, Chakra UI, Redux Toolkit, Recoil, React Query
+APIs & Databases: REST, GraphQL, Grpc, WebRTC, Socket.io, PostgreSQL, MongoDB, Prisma, Drizzle
+DevOps & Testing: Docker, Kubernetes, AWS, Azure DevOps, CI/CD (GitHub Actions), Jest, Cypress
+Architecture & Methodologies: Microservices, Micro-Frontends, Agile/Scrum, TDD
+Experience
+EL Nova LabsMar 2024 – June 2025
+SoftwareEngineerIRemote
+•
+Backend Microservices: Designed and implemented scalable help & support microservices using Bun and Elysia.js,
+improving system reliability and reducing response time.
+•
+Real-Time Chat Backend: Led end-to-end development of a Socket.io-based chat functionality, including backend
+architecture, API integration, and event-driven state synchronization, enabling seamless real-time communication.
+•
+Micro-Frontend Architecture: Spearheaded the design and implementation of a micro-frontend architecture,
+ensuring modularity and cross-platform consistency across large-scale applications.
+•
+Real-Time State Management: Engineered advanced state synchronization using Redux Toolkit, reducing UI data
+inconsistencies and improving application reliability.
+•
+Testing Excellence: Implemented and maintained unit and integration tests using Jest, Cypress, and React Testing
+Library, improving test coverage and ensuring a seamless user experience through proactive bug identification.
+Big Wings LLCJan 2023 – Feb 2024
+FrontendEngineerChandigarh
+•
+Query Management Backend: Developed RESTful APIs using Node.js and MongoDB for contact forms and query
+resolution workflows, reducing manual intervention.
+•
+React Performance Optimization: Optimized React components and revamped state management strategies,
+leading to a 45% improvement in vehicle tracking efficiency.
+•
+Custom Scheduling Algorithm: Developed a dynamic scheduling algorithm for the frontend, reducing dispatch
+conflicts by 35% and ensuring seamless operations.
+PrepBytesJul 2022 – Dec 2022
+SoftwareEngineerInternRemote
+•
+Responsive Web Development: Delivered fully responsive and accessible interfaces using React.js, providing a
+seamless experience across devices.
+•
+State Management Workflow: Improved maintainability by reducing bugs through efficient Redux state
+management, leading to a 15% enhancement in workflow efficiency.
+Projects
+Threads|Next.js,React.js,Node.js,MongoDB,Clerk,ShadcnUIæLive Url
+•
+Designed and implemented a high-engagement social media platform with features supporting real-time interactions
+and seamless content sharing.
+•
+Leveraged modern UI frameworks and backend services to ensure scalability and a smooth user experience.
+Reudemy|React.js,Express.js,Node.js,MongoDB,ChakraUI,ReduxæLive Url
+•
+Built an immersive e-learning platform from scratch and an intuitive browsing experience.
+•
+Developed the entire backend including user management, course enrollment, and payment processing.
+Education
+Bengal Institute of TechnologyJune 2018 - July 2022
+BachelorofTechnologyinComputerScienceEngineering(GPA:8.2/10)Kolkata,WestBengal

@@ -1,0 +1,54 @@
+# docker-compose.yml (in the project root)
+version: '3.8'
+
+services:
+  # The Ollama service is now built from our custom Dockerfile
+  ollama:
+    build:
+      # The context is the directory containing our custom Dockerfile and script
+      context: ./docker/ollama
+    # You can override the default model here if you want:
+    # command: ["mistral"]
+    container_name: ollama_service
+    ports:
+      - "11434:11434"
+    volumes:
+      # The volume is still crucial for persisting the downloaded models
+      - ollama_data:/root/.ollama
+    networks:
+      - chatbot_network
+    # Uncomment for GPU support if you have it
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # The backend service definition remains the same
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: chatbot_backend
+    ports:
+      - "3001:3000"
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - ./server/src:/app/src
+    networks:
+      - chatbot_network
+    restart: unless-stopped
+
+# Define the shared network for services to communicate
+networks:
+  chatbot_network:
+    driver: bridge
+
+# Define the named volume for persisting Ollama models
+volumes:
+  ollama_data:
