@@ -1,34 +1,23 @@
-# Build stage with Node.js (Vite requires Node)
-FROM node:20-alpine AS builder
+# Base image with Bun
+FROM oven/bun:1.1.13-alpine
+
+# Set working directory
 WORKDIR /app
 
 # Copy dependency files
-COPY package.json package-lock.json ./
-RUN npm ci --silent
+COPY bun.lock package.json ./
 
-# Copy source code
-COPY src ./src
-COPY public ./public
-COPY index.html vite.config.ts ./
+# Install dependencies
+RUN bun install --frozen-lockfile
 
-# Build the application
-RUN npm run build
+# Copy the rest of the application
+COPY . .
 
-# Production stage
-FROM nginx:1.25-alpine
-WORKDIR /usr/share/nginx/html
+# Build the Vite app
+RUN bun run build
 
-# Remove default nginx files
-RUN rm -rf ./*
+# Expose the default preview port
+EXPOSE 5173
 
-# Copy built assets
-COPY --from=builder /app/dist .
-
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Serve the built app using Vite's preview server
+CMD ["bun", "run", "preview"]

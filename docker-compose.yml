@@ -5,7 +5,7 @@ services:
     build:
       context: ./client
     ports:
-      - '3000:80'
+      - '5173:5173'
     depends_on:
       backend:
         condition: service_healthy
@@ -34,16 +34,17 @@ services:
     image: ollama/ollama:latest
     volumes:
       - ollama_data:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh
     ports:
       - '11434:11434'
-    command: >
-      sh -c "ollama serve & sleep 5 && ollama pull llama3 && wait"
+    entrypoint: ["/usr/bin/env", "bash", "/entrypoint.sh"]
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:11434']
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+    restart: unless-stopped
     networks:
       - app-network
 
