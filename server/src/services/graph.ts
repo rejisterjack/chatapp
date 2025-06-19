@@ -1,9 +1,6 @@
 import { StateGraph, END } from '@langchain/langgraph'
 import { ChatGroq } from '@langchain/groq'
-
-import {
-  SystemMessage,
-} from '@langchain/core/messages'
+import { SystemMessage } from '@langchain/core/messages'
 import { GraphState } from '../types'
 
 const model = new ChatGroq({
@@ -12,7 +9,7 @@ const model = new ChatGroq({
 })
 
 const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
-  const { messages, document_context } = state
+  const { messages, document_context, memory } = state
 
   const systemMessage = document_context
     ? new SystemMessage(
@@ -20,17 +17,21 @@ const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
       )
     : new SystemMessage('You are a helpful assistant.')
 
-  const messagesWithSystem = [systemMessage, ...messages]
+  const memoryVars = (await memory?.loadMemoryVariables({})) ?? {}
+  const historyMessages = memoryVars.messages ?? []
+
+  const messagesWithSystem = [systemMessage, ...historyMessages, ...messages]
 
   console.log('Invoking model with messages:', messagesWithSystem)
 
   const response = await model.invoke(messagesWithSystem)
 
-  console.log('Model response:', response)
+  await memory?.saveContext(
+    { input: messages[0].content },
+    { output: response.content }
+  )
 
-  return {
-    messages: [response],
-  }
+  return { messages: [response] }
 }
 
 const workflow = new StateGraph<GraphState>({
@@ -43,13 +44,15 @@ const workflow = new StateGraph<GraphState>({
       value: (x, y) => y ?? x,
       default: () => undefined,
     },
+    memory: {
+      value: (x, y) => y ?? x,
+      default: () => undefined,
+    },
   },
 })
 
 workflow.addNode('llm', callModel)
-
 workflow.setEntryPoint('llm' as '__start__')
-
 workflow.addConditionalEdges('llm' as '__start__', () => END)
 
 export const app = workflow.compile()

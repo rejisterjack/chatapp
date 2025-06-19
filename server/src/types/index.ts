@@ -1,6 +1,8 @@
 import { BaseMessage } from '@langchain/core/messages'
+import { BufferMemory } from 'langchain/memory'
 
-export interface GraphState {
+export type GraphState = {
   messages: BaseMessage[]
   document_context?: string
+  memory?: BufferMemory
 }
