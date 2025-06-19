@@ -1,4 +1,3 @@
-// src/lib/pdfParser.ts
 import pdf from 'pdf-parse'
 
 export async function getTextFromPdf(fileBuffer: Buffer): Promise<string> {

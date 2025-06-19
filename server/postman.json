@@ -1,0 +1,98 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-1e2f3a4b5c6d",
+		"name": "Chatbot API",
+		"description": "A collection to test the Elysia Chatbot API, including file upload and chat functionalities.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						""
+					]
+				},
+				"description": "A simple GET request to check if the server is running and responsive. Should return `{\"status\":\"ok\"}`."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Upload PDF for Context",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": []
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/upload",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"upload"
+					]
+				},
+				"description": "Upload a PDF file (e.g., a resume) to provide context for the chatbot.\n\n**Instructions:**\n1. Go to the **Body** tab below.\n2. Under the `file` key, click the **'Select Files'** button.\n3. Choose a PDF from your computer to upload."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Send a Chat Message",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\": \"What are the key skills mentioned in the document I just uploaded?\",\n    \"conversationId\": \"postman-convo-12345\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/chat",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"chat"
+					]
+				},
+				"description": "Send a message to the chatbot. If you uploaded a file first, you can ask questions about it.\n\nThe `conversationId` should be a unique string for each conversation thread (you can reuse it to continue a conversation)."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
