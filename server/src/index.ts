@@ -2,7 +2,6 @@ import { Elysia, t } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
 import { HumanMessage } from '@langchain/core/messages'
-
 import { getTextFromPdf } from './lib/pdfParser'
 import { app as langGraphApp } from './services/graph'
 
@@ -21,27 +20,17 @@ const app = new Elysia()
       },
     })
   )
-
   .get('/', () => ({ status: 'ok' }))
-
   .group('/api', (app) =>
     app
       .post(
         '/upload',
         async ({ body, set }) => {
-          console.log('Received file upload request')
           const file = body.file
-
           try {
             const fileBuffer = Buffer.from(await file.arrayBuffer())
             const parsedText = await getTextFromPdf(fileBuffer)
-
             fileContext = parsedText
-
-            console.log(
-              `Successfully parsed and stored context from ${file.name}. Length: ${parsedText.length}`
-            )
-
             return {
               message: 'File uploaded and processed successfully.',
               fileName: file.name,
@@ -61,37 +50,36 @@ const app = new Elysia()
           }),
         }
       )
-
       .post(
         '/chat',
-        async ({ body, set }) => {
+        async function* ({ body }) {
           const { message, conversationId } = body
-          console.log(
-            `Chat request for conversation '${conversationId}' with message: "${message}"`
-          )
+
+          const inputs = {
+            messages: [new HumanMessage(message)],
+            document_context: fileContext,
+          }
+
+          const config = {
+            configurable: { thread_id: conversationId },
+            streamMode: 'updates',
+          }
 
           try {
-            const inputs = {
-              messages: [new HumanMessage(message)],
-              document_context: fileContext,
-            }
+            const streamResponse = await langGraphApp.stream(inputs, config)
 
-            const config = { configurable: { thread_id: conversationId } }
-
-            const response = await langGraphApp.invoke(inputs, config)
-
-            const aiResponse = response.messages[response.messages.length - 1]
-
-            return {
-              response: aiResponse.content,
+            for await (const event of streamResponse) {
+              console.log('LangGraph event:', event)
+              if (event.llm) {
+                const chunk = event.llm.messages[0]?.content
+                if (typeof chunk === 'string' && chunk.length > 0) {
+                  yield chunk
+                }
+              }
             }
           } catch (error: any) {
-            console.error('Error during chat processing:', error)
-            set.status = 500
-            return {
-              error: 'An error occurred during the chat.',
-              details: error.message,
-            }
+            console.error('LangGraph streaming error:', error)
+            yield 'Error: An error occurred during the stream.'
           }
         },
         {

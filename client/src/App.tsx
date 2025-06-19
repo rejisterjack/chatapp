@@ -1,119 +1,119 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { Chat } from './components/Chat'
 import { ChatInput } from './components/ChatInput'
 import { FileUpload } from './components/FileUpload'
-import { useChat } from './hooks/useChat'
+import { ChatMessage } from './components/ChatMessage'
 import { useUpload } from './hooks/useUpload'
-import { Toast } from './components/Toast'
+import { Bot, Github } from 'lucide-react'
+import { Chat } from './components/Chat'
 
 export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
 }
-
 export interface UploadedFile {
   name: string
   status: 'idle' | 'uploading' | 'success' | 'error'
-  error?: string
 }
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
+  const [isResponding, setIsResponding] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
-  const [toast, setToast] = useState<{
-    message: string
-    type: 'success' | 'error'
-  } | null>(null)
+  const [conversationId, setConversationId] = useState<string>('')
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
-  const { sendMessage, isResponding } = useChat()
-  const { uploadFile, isUploading } = useUpload()
-  const conversationId = uuidv4()
+  useEffect(() => {
+    setConversationId(uuidv4())
+  }, [])
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
+  const { uploadFile, isUploading, uploadError } = useUpload()
+
+  useEffect(() => {
+    chatContainerRef.current?.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
+  }, [messages])
+
+  const handleFileUpload = async (file: File) => {
+    setUploadedFile({ name: file.name, status: 'uploading' })
+    try {
+      await uploadFile(file)
+      setUploadedFile({ name: file.name, status: 'success' })
+      const systemMessage: Message = {
+        id: uuidv4(),
+        role: 'assistant',
+        content: `I've finished reading **${file.name}**. You can now ask me questions about it!`,
+      }
+      setMessages((prev) => [...prev, systemMessage])
+    } catch (e) {
+      console.error(e)
+      setUploadedFile({ name: file.name, status: 'error' })
+    }
   }
 
   const handleSendMessage = async (input: string) => {
     if (!input.trim()) return
 
-    const userMessage: Message = {
-      id: uuidv4(),
-      role: 'user',
-      content: input,
-    }
+    const userMessage: Message = { id: uuidv4(), role: 'user', content: input }
     setMessages((prev) => [...prev, userMessage])
+    setIsResponding(true)
+    const assistantMessageId = uuidv4()
 
     try {
-      const response = await sendMessage({ message: input, conversationId })
-      const aiMessage: Message = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: response.response,
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: input, conversationId }),
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error('Network response was not ok')
       }
-      setMessages((prev) => [...prev, aiMessage])
-    } catch (error) {
-      console.error('Chat error:', error)
-      const errorMessage: Message = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an issue. Could you please try again?',
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let fullResponse = ''
+
+      setMessages((prev) => [
+        ...prev,
+        { id: assistantMessageId, role: 'assistant', content: '' },
+      ])
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        fullResponse += chunk
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMessageId
+              ? { ...msg, content: fullResponse }
+              : msg
+          )
+        )
       }
-      setMessages((prev) => [...prev, errorMessage])
-      showToast('Failed to send message. Please try again.', 'error')
-    }
-  }
-
-  const handleFileUpload = async (file: File) => {
-    if (file.type !== 'application/pdf') {
-      setUploadedFile({
-        name: file.name,
-        status: 'error',
-        error: 'Only PDF files are supported',
-      })
-      showToast('Only PDF files are supported', 'error')
-      return
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadedFile({
-        name: file.name,
-        status: 'error',
-        error: 'File size exceeds 5MB limit',
-      })
-      showToast('File size exceeds 5MB limit', 'error')
-      return
-    }
-
-    setUploadedFile({ name: file.name, status: 'uploading' })
-
-    try {
-      await uploadFile(file)
-      setUploadedFile({ name: file.name, status: 'success' })
-      showToast('File uploaded successfully!', 'success')
     } catch (error) {
-      console.error('Upload error:', error)
-      setUploadedFile({
-        name: file.name,
-        status: 'error',
-        error: 'Failed to upload file',
-      })
-      showToast('Failed to upload file', 'error')
+      console.error('Streaming failed:', error)
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uuidv4(),
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
+        },
+      ])
+    } finally {
+      setIsResponding(false)
     }
   }
 
   return (
     <div className='flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
-
       <header className='p-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md'>
         <div className='max-w-7xl mx-auto flex justify-between items-center'>
           <div>

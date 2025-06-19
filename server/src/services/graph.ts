@@ -1,42 +1,46 @@
 import { StateGraph, END } from '@langchain/langgraph'
 import { ChatGroq } from '@langchain/groq'
-
 import {
+  BaseMessage,
   SystemMessage,
+  AIMessageChunk,
 } from '@langchain/core/messages'
-import { GraphState } from '../types'
 
-const model = new ChatGroq({
+interface GraphState {
+  messages: BaseMessage[]
+  document_context?: string
+}
+
+export const model = new ChatGroq({
   model: 'llama3-8b-8192',
   temperature: 0.7,
 })
 
-const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
+async function* callModel(
+  state: GraphState
+): AsyncGenerator<{ messages: [AIMessageChunk] }> {
   const { messages, document_context } = state
 
   const systemMessage = document_context
     ? new SystemMessage(
-        `You are a helpful assistant. You have been provided with the following document. Use it to answer the user's questions if they are relevant. \n\n--- DOCUMENT START ---\n${document_context}\n--- DOCUMENT END ---`
+        `You are a helpful assistant. Use this document if relevant:\n${document_context}`
       )
     : new SystemMessage('You are a helpful assistant.')
 
-  const messagesWithSystem = [systemMessage, ...messages]
+  const latestMessage = messages[messages.length - 1]
+  const messagesWithSystem = [systemMessage, latestMessage]
 
-  console.log('Invoking model with messages:', messagesWithSystem)
+  const stream = await model.stream(messagesWithSystem)
 
-  const response = await model.invoke(messagesWithSystem)
-
-  console.log('Model response:', response)
-
-  return {
-    messages: [response],
+  for await (const chunk of stream) {
+    yield { messages: [chunk] }
   }
 }
 
 const workflow = new StateGraph<GraphState>({
   channels: {
     messages: {
-      value: (x, y) => x.concat(y),
+      value: (x, y) => [...x, ...y],
       default: () => [],
     },
     document_context: {
@@ -47,9 +51,7 @@ const workflow = new StateGraph<GraphState>({
 })
 
 workflow.addNode('llm', callModel)
-
 workflow.setEntryPoint('llm' as '__start__')
-
-workflow.addConditionalEdges('llm' as '__start__', () => END)
+workflow.addEdge('llm' as '__start__', END)
 
 export const app = workflow.compile()
