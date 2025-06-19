@@ -1,4 +1,3 @@
-// src/index.ts
 import { Elysia, t } from 'elysia'
 import { cors } from '@elysiajs/cors'
 import { swagger } from '@elysiajs/swagger'
@@ -7,14 +6,9 @@ import { HumanMessage } from '@langchain/core/messages'
 import { getTextFromPdf } from './lib/pdfParser'
 import { app as langGraphApp } from './services/graph'
 
-// In-memory storage for the parsed document context.
-// WARNING: This is for demonstration only! In a real application,
-// you would use a database or a proper session store (e.g., Redis)
-// to handle multiple users and sessions.
 let fileContext: string | null = null
 
 const app = new Elysia()
-  // Add plugins
   .use(cors())
   .use(
     swagger({
@@ -28,13 +22,10 @@ const app = new Elysia()
     })
   )
 
-  // Health check endpoint
   .get('/', () => ({ status: 'ok' }))
 
-  // API Group
   .group('/api', (app) =>
     app
-      // Endpoint to upload and process a file
       .post(
         '/upload',
         async ({ body, set }) => {
@@ -45,7 +36,6 @@ const app = new Elysia()
             const fileBuffer = Buffer.from(await file.arrayBuffer())
             const parsedText = await getTextFromPdf(fileBuffer)
 
-            // Store the context in our simple in-memory store
             fileContext = parsedText
 
             console.log(
@@ -66,13 +56,12 @@ const app = new Elysia()
           body: t.Object({
             file: t.File({
               type: 'application/pdf',
-              maxSize: '10m', // Limit file size to 10MB
+              maxSize: '10m',
             }),
           }),
         }
       )
 
-      // Endpoint for chat conversations
       .post(
         '/chat',
         async ({ body, set }) => {
@@ -84,17 +73,13 @@ const app = new Elysia()
           try {
             const inputs = {
               messages: [new HumanMessage(message)],
-              // Pass the stored document context to the graph
               document_context: fileContext,
             }
 
-            // We use a unique thread_id for each conversation.
-            // LangGraph uses this to manage state persistence internally.
             const config = { configurable: { thread_id: conversationId } }
 
             const response = await langGraphApp.invoke(inputs, config)
 
-            // The response.messages contains the AIMessage from the model
             const aiResponse = response.messages[response.messages.length - 1]
 
             return {
