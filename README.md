@@ -43,7 +43,7 @@ A modern web application that allows users to upload PDF files and engage in con
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/rejisterjack/chatapp.git
 cd chatapp
 ```
 
@@ -51,7 +51,7 @@ cd chatapp
 ```bash
 # Frontend
 cd client
-npm install
+bun install
 
 # Backend
 cd ../server
@@ -61,7 +61,7 @@ bun install
 3. Start development servers:
 ```bash
 # Frontend (in client directory)
-npm run dev
+bun run dev
 
 # Backend (in server directory)
 bun run dev
@@ -75,7 +75,7 @@ docker-compose up --build
 ```
 
 The application will be available at:
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:5173
 - Backend: http://localhost:8080
 - API Documentation: http://localhost:8080/docs
 
