@@ -5,6 +5,7 @@ import {
   HumanMessage,
   AIMessage,
   SystemMessage,
+  BaseMessage,
 } from '@langchain/core/messages'
 import { GraphState } from '../types'
 
@@ -32,6 +33,7 @@ const callModel = async (state: GraphState): Promise<Partial<GraphState>> => {
 
   return {
     messages: [response],
+    messages: [response],
   }
 }
 
@@ -39,9 +41,11 @@ const workflow = new StateGraph<GraphState>({
   channels: {
     messages: {
       value: (x, y) => x.concat(y),
+      value: (x, y) => x.concat(y),
       default: () => [],
     },
     document_context: {
+      value: (x, y) => y ?? x,
       value: (x, y) => y ?? x,
       default: () => undefined,
     },
