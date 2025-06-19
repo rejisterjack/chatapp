@@ -31,13 +31,13 @@ services:
       - app-network
 
   ollama:
-    build:
-      context: ./docker/ollama
-      dockerfile: Dockerfile
+    image: ollama/ollama:latest
     volumes:
       - ollama_data:/root/.ollama
     ports:
       - '11434:11434'
+    command: >
+      sh -c "ollama serve & sleep 5 && ollama pull llama3 && wait"
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:11434']
       interval: 10s
