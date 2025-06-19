@@ -12,12 +12,14 @@ interface Props {
   uploadedFile: UploadedFile | null
   handleFileUpload: (file: File) => void
   isUploading: boolean
+  allowedTypes?: string[]
 }
 
 export function FileUpload({
   uploadedFile,
   handleFileUpload,
   isUploading,
+  allowedTypes = ['application/pdf'],
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -44,7 +46,7 @@ export function FileUpload({
         ref={fileInputRef}
         onChange={onFileChange}
         className='hidden'
-        accept='.pdf'
+        accept={allowedTypes?.join(',')}
       />
       <button
         onClick={() => fileInputRef.current?.click()}
