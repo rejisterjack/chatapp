@@ -8,6 +8,8 @@ import { app as langGraphApp } from './services/graph'
 
 let fileContext: string | null = null
 
+const PORT = process.env.PORT || 8080
+
 const app = new Elysia()
   .use(cors())
   .use(
@@ -102,7 +104,7 @@ const app = new Elysia()
         }
       )
   )
-  .listen(8080)
+  .listen(PORT)
 
 console.log(
   `🦊 Elysia is running at http://${app.server?.hostname}:${app.server?.port}`
