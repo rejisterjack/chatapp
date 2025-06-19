@@ -5,8 +5,10 @@ import { HumanMessage } from '@langchain/core/messages'
 
 import { getTextFromPdf } from './lib/pdfParser'
 import { app as langGraphApp } from './services/graph'
+import { BufferMemory } from 'langchain/memory'
 
-let fileContext: string | null = null
+const contextMap = new Map<string, string>()
+const memoryStore = new Map<string, BufferMemory>()
 
 const PORT = process.env.PORT || 8080
 
@@ -38,7 +40,8 @@ const app = new Elysia()
             const fileBuffer = Buffer.from(await file.arrayBuffer())
             const parsedText = await getTextFromPdf(fileBuffer)
 
-            fileContext = parsedText
+            const conversationId = crypto.randomUUID()
+            contextMap.set(conversationId, parsedText)
 
             console.log(
               `Successfully parsed and stored context from ${file.name}. Length: ${parsedText.length}`
@@ -47,6 +50,7 @@ const app = new Elysia()
             return {
               message: 'File uploaded and processed successfully.',
               fileName: file.name,
+              conversationId,
               content_preview: parsedText.substring(0, 200) + '...',
             }
           } catch (error: any) {
@@ -69,31 +73,38 @@ const app = new Elysia()
         async ({ body, set }) => {
           const { message, conversationId } = body
           console.log(
-            `Chat request for conversation '${conversationId}' with message: "${message}"`
+            `Chat for conversation '${conversationId}' with: "${message}"`
           )
 
-          try {
-            const inputs = {
-              messages: [new HumanMessage(message)],
-              document_context: fileContext,
-            }
+          const document_context = contextMap.get(conversationId)
+          if (!document_context) {
+            set.status = 400
+            return { error: 'No document uploaded for this conversationId.' }
+          }
 
-            const config = { configurable: { thread_id: conversationId } }
+          let memory = memoryStore.get(conversationId)
+          if (!memory) {
+            memory = new BufferMemory({
+              returnMessages: true,
+              memoryKey: 'messages',
+            })
+            memoryStore.set(conversationId, memory)
+          }
 
-            const response = await langGraphApp.invoke(inputs, config)
+          const inputs = {
+            messages: [new HumanMessage(message)],
+            document_context,
+            memory,
+          }
 
-            const aiResponse = response.messages[response.messages.length - 1]
+          const config = { configurable: { thread_id: conversationId } }
 
-            return {
-              response: aiResponse.content,
-            }
-          } catch (error: any) {
-            console.error('Error during chat processing:', error)
-            set.status = 500
-            return {
-              error: 'An error occurred during the chat.',
-              details: error.message,
-            }
+          const response = await langGraphApp.invoke(inputs, config)
+
+          const aiResponse = response.messages[response.messages.length - 1]
+
+          return {
+            response: aiResponse.content,
           }
         },
         {
